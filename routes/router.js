@@ -5,7 +5,7 @@ const {createUserPref, userPref, currentSong, editcurrentSong, AllLikedSongInfo,
 const {createSong, getSong, getArtistSong, getNameSong} = require('../controllers/songsController');
 const {getArtistInfo} = require('../controllers/artistcontroller.js')
 const {getUserProfile} = require('../controllers/userProfile.js')
-const { createPlaylist, editPlaylist, userPlaylist, getPlaylistById, removeImageThumbnail ,removeSongFromSpecificPlaylist, getArtistPlaylist, addSongToPlaylist, getDefaultPlaylist} = require('../controllers/playlistController');
+const { createPlaylist, editPlaylist, userPlaylist, getPlaylistById, deleteUserPlaylist, createSimilarPlaylist, removeImageThumbnail ,removeSongFromSpecificPlaylist, getArtistPlaylist, addSongToPlaylist, getDefaultPlaylist} = require('../controllers/playlistController');
 const passport = require('passport');
 const {cdnImageUpload, cdnSongUpload} = require('../controllers/cdnUpload.js')
 const { upload} = require('../controllers/fileupload.js');
@@ -55,7 +55,7 @@ router.route('/v1/artist/:artistId').all(passport.authenticate('jwt', { session:
 
 // To get specific song by search
 router.route('/v1/song_name/:songName').all(passport.authenticate('jwt', { session: false }))
-      .get(getNameSong)
+      .get(getNameSong);
 
 
 
@@ -63,7 +63,6 @@ router.route('/v1/song_name/:songName').all(passport.authenticate('jwt', { sessi
 //Playlist
 router.route('/v1/playlist').all(passport.authenticate('jwt', {session : false} ))
       .get(createPlaylist, userPlaylist).post(upload, cdnImageUpload, editPlaylist);
-
 
    
 
@@ -81,7 +80,7 @@ router.route('/v1/playlist/:playlistId/:songId').all(passport.authenticate('jwt'
 
 
  router.route('/v1/playlist/:playlistId').all(passport.authenticate('jwt', {session : false} ))
-       .get(getPlaylistById).patch(removeImageThumbnail);
+       .get(getPlaylistById).patch(removeImageThumbnail).delete(deleteUserPlaylist).post(createSimilarPlaylist);
 
 
 

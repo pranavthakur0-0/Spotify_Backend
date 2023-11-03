@@ -6,6 +6,7 @@ const cloudConnect  = async()=>{
         api_key : process.env.CLOUDINARY_API,
         api_secret: process.env.CLOUDINARY_SECRET
     });
+    console.log("cloudinary");
 }
 
 module.exports = cloudConnect;

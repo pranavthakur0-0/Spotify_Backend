@@ -2,6 +2,8 @@ const SongModel = require("../models/Songs");
 const UserModel = require("../models/User");
 const UserPrefModel = require("../models/UserPreference")
 const mongoose = require('mongoose');
+const {setRedisValue, getRedisValue} = require('../redisConnect/redisFunction');
+
 
 exports.createUserPref = async(req,res,next)=>{
     try{
@@ -85,10 +87,11 @@ exports.AllLikedSongInfo = async (req, res, next) => {
           newItem.artistName = fetch.username;
            return newItem;
          }))
-
          return  res.status(200).json({result : final});
+
        }
       }
+
        return res.status(200).json({msg : "Songs you like will appear here"});
     } catch (error) {
        return res.status(500).json({error : "Server Error"});

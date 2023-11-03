@@ -15,7 +15,8 @@ exports.createPlaylist = async(req, res, next)=>{
      const playlistData = {name, owner : currentUser._id, owner : currentUser, collaborators : []};
      const playlist = await PlaylistModel.create(playlistData);
     if(playlist){
-        next();
+      const userPlaylists = await getUserPlaylists(currentUser._id, res);
+      res.status(200).json({userPlaylists : userPlaylists, msg : "Added to library"});
     }
 }
 
@@ -47,23 +48,21 @@ exports.editPlaylist = async (req, res, next) => {
   
 //--- Getting the playlist by using UserId it will get us all the playlist that user made
 exports.userPlaylist = async (req, res, next) => {
-    const currentUser = req.user;
-    const playlist = await PlaylistModel.find({ owner: currentUser._id });
-
-    if (playlist && playlist.length > 0) {
-        const playlistWithUsername = [];
-        for (let item of playlist) {
-            const user = await UserModel.findById(item.owner);
-            item = item.toObject(); // Convert the Mongoose document to a plain JavaScript object
-            item.username = user.username;
-            playlistWithUsername.push(item);
-        }
-       res.status(200).json({playlistWithUsername, msg : "Added to library"});
-    }else{
-        res.status(200).json([]);
+    const userId = req.user._id;
+    try {
+      const userPlaylists = await PlaylistModel.aggregate([
+        {
+          $match: {
+            owner: userId,
+          },
+        },
+      ]);
+      res.status(200).json({userPlaylists : userPlaylists});
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ err: "Server error" });
+      return null;
     }
-    // If no playlists were found, return an empty array
-
 };
 
 
@@ -99,6 +98,86 @@ exports.removeImageThumbnail = async(req,res,next)=>{
         return res.status(301).json({err : "Invalid"});
     }
 }
+
+
+const getUserPlaylists = async (userId, res) => {
+  try {
+    const userPlaylists = await PlaylistModel.aggregate([
+      {
+        $match: {
+          owner: userId,
+        },
+      },
+    ]);
+    return userPlaylists;
+  } catch (err) {
+    res.status(500).json({ err: "Server error" });
+    return null;
+  }
+};
+
+exports.deleteUserPlaylist = async (req, res, next) => {
+  const { playlistId } = req.params;
+  const currentUser = req.user;
+
+  try {
+    const playlistData = await PlaylistModel.findById(playlistId);
+
+    if (!playlistData) {
+      return res.status(404).json({ err: "Playlist not found" });
+    }
+
+    if (!playlistData.owner.equals(currentUser._id)) {
+      return res.status(403).json({ err: "Not allowed to delete this playlist." });
+    }
+
+    // Delete the playlist since it belongs to the current user
+    const deletedPlaylist = await PlaylistModel.findByIdAndRemove(playlistId);
+
+    // Retrieve user playlists using the common function
+    const userPlaylists = await getUserPlaylists(currentUser._id, res);
+
+    res.status(200).json({
+      deletedPlaylist,
+      userPlaylists,
+      msg: "Playlist deleted successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ err: "Server error" });
+  }
+};
+
+exports.createSimilarPlaylist = async (req, res, next) => {
+  const { playlistId } = req.params;
+  const currentUser = req.user;
+
+  try {
+    const OldplaylistData = await PlaylistModel.findById(playlistId);
+    const name = "My Playlist #";
+
+    if (!name) {
+      return res.status(400).json({ err: "Insufficient Data" });
+    }
+
+    const playlistData = {
+      name,
+      owner: currentUser._id,
+      collaborators: [],
+      songs: OldplaylistData.songs,
+    };
+
+    const playlist = await PlaylistModel.create(playlistData);
+
+    // Retrieve user playlists using the common function
+    const userPlaylists = await getUserPlaylists(currentUser._id, res);
+
+    res.status(200).json({ playlist, userPlaylists, msg: "Added similar playlist to library" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ err: "Server error" });
+  }
+};
 
 
 exports.removeSongFromSpecificPlaylist = async (req, res, next) => {
@@ -140,7 +219,6 @@ exports.getArtistPlaylist = async (req,res,next)=>{
 
 //---- Add song to Playlist
 exports.addSongToPlaylist = async (req, res, next) => {
-    console.log("helli");
     const currentUser = req.user;
     const { playlistId, songId } = req.body;
     console.log(playlistId, songId);

@@ -2,7 +2,7 @@ const SongModel = require("../models/Songs");
 const UserModel = require("../models/User");
 const UserPrefModel = require("../models/UserPreference")
 const mongoose = require('mongoose');
-const {setRedisValue, getRedisValue} = require('../redisConnect/redisFunction');
+// const {setRedisValue, getRedisValue} = require('../redisConnect/redisFunction');
 
 
 exports.createUserPref = async(req,res,next)=>{

@@ -8,7 +8,7 @@ const JwtStrategy = require('passport-jwt').Strategy,
     ExtractJwt = require('passport-jwt').ExtractJwt;
 const passport = require('passport');
 const path = require('path');
-require('./redisConnect/redis.js');
+// require('./redisConnect/redis.js');
 const User = require('./models/User.js');
 const authroutes = require('./routes/router.js');
 const cors = require('cors');
